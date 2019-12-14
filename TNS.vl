@@ -1,0 +1,353 @@
+`define STOP $finish 
+
+//SCANNER MODULE START
+module Scanner_Decoder(R0, R1, R2, R3, C0, C1, C2, N0, N1, N2 ,N3,CLK);
+
+	input R0,R1,R2,R3;
+	inout C0,C1,C2;
+	input CLK;
+	output N0,N1,N2,N3;
+	
+	assign N3 = (~R2 & ~R1 & ~R0 & C2) | (~R3 & ~R1 & ~R0 & C1) | (~C2 & ~C1 & ~C0) | (~R1 & ~R0 & C0) | (R3 & R1) | (R3 & R0) | (R3 & C2) | (R3 & C0) | (R2 & R1) | (R2 & R0) | (R2 & C1) | (R2 & C0) | (R1 & R0) | (C2 & C1) | (C2 & C0) | (C1 & C0);
+	assign N2 = (~C2 & ~C1 & ~C0) | (~R3 & ~R2 & ~R0) | (R3 & R2) | (R3 & R0) | (R2 & R0) | (R2 & C2) | (C2 & C1) | (C2 & C0) | (C1 & C0) | (R1);
+	assign N1 = (~R3 & ~R2 & ~R1 & C1) | (~R2 & ~C2 & ~C1) | (R2 & ~C1 & ~C0) | (~R1 & ~R0 & C2) | (R3 & R2) | (R3 & R1) | (R3 & C2) | (R3 & C0) | (R2 & R1) | (R1 & R0) | (R1 & C0) | (R0 & C1) | (R0 & C0) | (C2 & C1) | (C2 & C0) | (C1 & C0);
+	assign N0 = (~R3 & ~R2 & ~R0 & C1) | (~R3 & ~R1 & ~C1) | (R3 & ~C2 & ~C1) | (R1 & ~C2 & ~C0) | (R3 & R2) | (R3 & R1) | (R3 & R0) | (R2 & R0) | (R2 & C2) | (R2 & C0) | (R0 & C2) | (R0 & C0) | (C2 & C1) | (C2 & C0) | (C1 & C0);
+endmodule
+
+module Scanner_Circuit(C2,C1,C0,KN3,KN2,KN1,KN0,CLK);
+
+	input KN3,KN2,KN1,KN0;
+	input CLK;
+	wire notKN3,notKN2,notKN1,notKN0;
+	wire C0_0,C0_1,C0_2;
+	wire C1_0,C1_1,C1_2;
+	wire C2_0,C2_1,C2_2,C2_3;
+	output C2,C1,C0;
+	
+	not N1(notKN3,KN3);
+	not N2(notKN2,KN2);
+	not N3(notKN1,KN1);
+	not N4(notKN0,KN0);
+	
+	and A2_0(C2_0,notKN3,KN2,notKN1,notKN0);
+	and A2_1(C2_1,notKN3,notKN2,notKN1,KN0);
+	and A2_2(C2_2,KN3,notKN2,KN1,notKN0);
+	and A2_3(C2_3,notKN3,KN2,KN1,KN0);
+	
+	
+	and A1_0(C1_0,notKN3,KN2,notKN1,KN0);
+	and A1_1(C1_1,notKN2,notKN1,notKN0);
+	and A1_2(C1_2,notKN3,notKN2,notKN0);
+	
+	and A0_0(C0_0,notKN3,KN2,KN1,notKN0);
+	and A0_1(C0_1,KN3,notKN2,KN0);
+	and A0_2(C0_2,notKN2,KN1,KN0);
+	
+	or A2(C2,C2_0,C2_1,C2_2,C2_3);
+	or A1(C1,C1_0,C1_1,C1_2);
+	or A0(C0,C0_0,C0_1,C0_2);
+	
+endmodule
+//SCANNER MODULE END
+
+//THIS MODULE IS CODED BY BB554C
+//THE 4-BIT DECODER HAS 4 INPUT AND 2 OUTPUTS
+//INPUTS ARE BINARY N0,N1,N2,N3
+//OUTPUTS ARE BINARY Select Reset 4-BIT BINARY ARRAY
+//THIS MODULE DECODES THE DETA AND DETERMINE WHAT KEY WAS PRESSED,
+//IF * IS PRESSED Select is set to 1 AND KeyArray is set to 0001
+//IF # IS PRESSED Reset is set to 1
+//IF a BCD NUMBER IS RECOGNIZED Select is set to 0 and KeyArray is retained
+//4-BIT DECODER STARTS HERE
+module FourBit_Decoder(Select,Reset,O3,O2,O1,O0,N);
+	input [3:0] N;
+	output O3,O2,O1,O0;
+	wire notN3,notN2,notN1,notN0;
+	wire O3_0,O3_1,O3_2;
+	output Select;
+	output Reset;
+	
+	reg O3_temp, O1_temp, O2_temp, O0_temp;
+	reg [3:0] KeyArray;
+	
+	and Z1_0(R1_0,N[3],N[1],N[0]);
+	and Z1_1(R1_1,N[3],N[2]);
+	or Z1(Reset,R1_0,R1_1);
+	
+	not X3(notN3,N[3]);
+	not X2(notN2,N[2]);
+	not X1(notN1,N[1]);
+	not X2(notN0,N[0]);
+	and Y1(Select,N[3],notN2,N[1],notN0);
+	
+	and U3_0(O3_0,N[3],notN1);
+	and U3_1(O3_1,N[3],N[2]);
+	and U3_2(O3_2,N[3],N[0]);
+	or U3(O3,O3_0,O3_1,O3_2);
+	
+	or U2(O2,N[2]);
+	assign O1 = (~N[3] & N[1]) | (N[2] & N[1]) | (N[1] & N[0]); //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1Turn into Logic Gates
+	assign O0 = (N[3] & ~N[2] & N[1]) | (N[0]); //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1Turn into Logic Gates
+endmodule
+//4-BIT DECODER ENDS HERE
+
+//FULLADDER MODULE
+module bcd_adder(a,b,carry_in,sum,carry);
+    input [3:0] a,b;
+    input carry_in;
+    output [3:0] sum;
+    output carry;
+    //Internal variables
+    reg [4:0] sum_temp;
+    reg [3:0] sum;
+    reg carry;  
+
+    always @(a,b,carry_in)
+    begin
+        sum_temp = a+b+carry_in;
+        if(sum_temp > 8)    
+			begin
+				sum_temp = sum_temp+6;
+				carry = 1;
+				sum = sum_temp[3:0];    
+			end
+        else    
+			begin
+				carry = 0;
+				sum = sum_temp[3:0];
+			end
+    end
+endmodule
+//END OF FULL ADDER MODULE
+
+
+//THIS MODULE CAME FROM THE BOOK
+//BCD TO SEVEN SEGMENT MODULE START
+module bcd_seven (bcd, seven);
+	input [3:0] bcd;
+	output [7:1] seven;
+
+	reg [7:1] seven;
+
+	always @(bcd)
+	begin
+		case (bcd)
+			4'b0000 : seven = 7'b0111111;
+			4'b0001 : seven = 7'b0000110;
+			4'b0010 : seven = 7'b1011011;
+			4'b0011 : seven = 7'b1001111;
+			4'b0100 : seven = 7'b1100110;
+			4'b0101 : seven = 7'b1101101;
+			4'b0110 : seven = 7'b1111101;
+			4'b0111 : seven = 7'b0000111;
+			4'b1000 : seven = 7'b1111111;
+			4'b1001 : seven = 7'b1101111;
+			default : seven = 7'b0000000;
+		endcase
+	end
+endmodule
+//BCD TO SEVEN SEGMENT MODULE END
+
+module TNS_Circuit(R0,R1,R2,R3,CLK_CKT,C0,C1,C2,X0,X1,X2,X3);
+	//SCANNER INPUT
+	input R0;
+	input R1;
+	input R2;
+	input R3;
+	inout C0;
+	inout C1;
+	inout C2;
+	input CLK_CKT;
+	//SCANNER OUTPUT & 4-BIT DECODER INPUT
+	wire N0;
+	wire N1;
+	wire N2;
+	wire N3;
+	wire V;
+	//4-BIT DECODER OUTPUTS
+	wire Reset;
+	reg ResetTmp;
+	wire Select;
+	reg SelectTmp;
+	output [3:0] DecoderOut;
+	output X0,X1,X2,X3;
+	assign X0 = N0;
+	assign X1 = N1;
+	assign X2 = N2;
+	assign X3 = N3;
+	
+	assign Reset = ResetTmp;
+	assign Select = SelectTmp;
+endmodule
+
+//CODE TEST SEGMENT FOR INPUT DATA
+//MAIN()
+module scantest;
+
+	integer i;
+	reg CLK;
+	wire C2,C1,C0;
+	wire R3,R2,R1,R0;
+	wire Select;
+	wire [3:0] KeyArray;
+	wire[3:0] N;
+	wire [3:0] M;
+	wire Reset;
+	reg [3:0] addReg;
+	reg [3:0] KNArray;
+	wire [15:0] wire16bit;
+	reg [15:0] reg16bit;
+	wire [3:0] carry;
+	reg [3:0] bcd1;
+	reg [3:0] bcd2;
+	reg [3:0] bcd3;
+	reg [3:0] bcd4;
+	wire [3:0] sum1;
+	wire [3:0] sum2;
+	wire [3:0] sum3;
+	wire [3:0] sum4;
+	reg [3:0] zero;
+	reg [3:0] B;
+	reg trigger;
+	wire [6:0] sevenSeg1;
+	wire [6:0] sevenSeg2;
+	wire [6:0] sevenSeg3;
+	wire [6:0] sevenSeg4;
+	
+	assign R0 = (KNArray == 1 | KNArray == 2 | KNArray == 3) ? 1'b1 : 1'b0;
+	assign R1 = (KNArray == 4 | KNArray == 5 | KNArray == 6) ? 1'b1 : 1'b0;
+	assign R2 = (KNArray == 7 | KNArray == 8 |  KNArray == 9) ? 1'b1 : 1'b0;
+	assign R3 = (KNArray == 10 | KNArray == 0 | KNArray == 11) ? 1'b1 : 1'b0;
+	
+	
+	initial begin
+	CLK = 0;
+	trigger = 0;
+	reg16bit = 16'b000000000000000;
+	addReg = 4'b0000;
+	zero = 4'b0000;
+	B = 4'b0000;
+	bcd1 = 4'b0000;
+	bcd2 = 4'b0000;
+	bcd3 = 4'b0000;
+	bcd4 = 4'b0000;
+	$display("Keypress  BCD4 BCD3 BCD2 BCD1 SEVENS4 SEVENS3 SEVENS2 SEVENS1");
+	$monitor("%d\t  %b %b %b %b %b %b %b %b",KNArray,bcd4,bcd3,bcd2,bcd1,sevenSeg4,sevenSeg3,sevenSeg2,sevenSeg1);
+	end
+	always #20 CLK = ~CLK;
+	
+	
+	always @(Select or R0 or R1 or R2 or R3)
+	begin
+		if(Select == 1'b0)
+			begin
+				addReg = 4'b0000;
+			end
+		else if(Select == 1'b1);
+			addReg = M;
+	end
+	
+	initial
+	begin
+		#20 KNArray = 11;
+		#20 KNArray = 11;
+		#20 KNArray = 11;
+		#20 KNArray = 9;
+		#20 KNArray = 9;
+		#20 KNArray = 9;
+		#20 KNArray = 6;
+		#20 KNArray = 5;
+		#20 KNArray = 4;
+		#20 KNArray = 3;
+		#20 KNArray = 2;
+		#20 KNArray = 1;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 11;
+		#20 KNArray = 9;
+		#20 KNArray = 8;
+		#20 KNArray = 7;
+		#20 KNArray = 6;
+		#20 KNArray = 5;
+		#20 KNArray = 4;
+		#20 KNArray = 3;
+		#20 KNArray = 2;
+		#20 KNArray = 1;
+		#20 KNArray = 11;
+		#20 KNArray = 9;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 11;
+		#20 KNArray = 9;
+		#20 KNArray = 9;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		#20 KNArray = 10;
+		$finish;
+	end
+
+	always @(CLK)
+		begin
+			if(Reset == 1'b1)
+				begin
+					reg16bit = 16'b000000000000000;
+					bcd1 = 4'b0000;
+					bcd2 = 4'b0000;
+					bcd3 = 4'b0000;
+					bcd4 = 4'b0000;
+					zero = 4'b0000;
+					B = 4'b0000;
+				end
+			else if(Select == 1'b0)
+				begin
+					bcd4=bcd3;
+					bcd3=bcd2;
+					bcd2=bcd1;
+					bcd1=M;
+					B=0;
+				end
+			if(Select == 1'b1)
+				begin
+					B = M;
+					trigger = ~trigger;
+				end
+		end
+	always @(trigger)
+	begin
+		bcd1=sum1;
+		bcd2=sum2;
+		bcd3=sum3;
+		bcd4=sum4;
+	end
+	Scanner_Circuit Scanner_Circuit1(C2,C1,C0,KNArray[3],KNArray[2],KNArray[1],KNArray[0],CLK);
+	Scanner_Decoder Scanner_Decoder1(R0, R1, R2, R3, C0, C1, C2, N[0], N[1], N[2], N[3],CLK);
+	FourBit_Decoder FourBitDecoder1(Select,Reset,M[3],M[2],M[1],M[0],N);
+	bcd_adder bcd_adder1(bcd1,B,zero[0],sum1,carry[0]);
+	bcd_adder bcd_adder2(bcd2,zero,carry[0],sum2,carry[1]);
+	bcd_adder bcd_adder3(bcd3,zero,carry[1],sum3,carry[2]);
+	bcd_adder bcd_adder4(bcd4,zero,carry[2],sum4,carry[3]);
+	bcd_seven bcd_seven1(bcd1, sevenSeg1);
+	bcd_seven bcd_seven2(bcd2, sevenSeg2);
+	bcd_seven bcd_seven3(bcd3, sevenSeg3);
+	bcd_seven bcd_seven4(bcd4, sevenSeg4);
+endmodule
+//
